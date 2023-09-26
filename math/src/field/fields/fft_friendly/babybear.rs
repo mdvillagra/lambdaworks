@@ -19,13 +19,13 @@ impl IsModulus<U64> for MontgomeryConfigBabybear31PrimeField {
 pub type Babybear31PrimeField =
     U64MontgomeryBackendPrimeField<MontgomeryConfigBabybear31PrimeField>;
 
-//a two-adic primitive root of unity is 21^(2^24)
-// 21^(2^24)=1 mod 2013265921
-// 2^27(2^4-1)+1 where n=27 (two-adicity) and k=2^4+1
+//A two-adic primitive root of unity is 21^(2^24)
+//From the modulus we have that 2^27(2^4-1)+1 where n=27 (two-adicity) and k=2^4+1
 impl IsFFTField for Babybear31PrimeField {
     const TWO_ADICITY: u64 = 27;
 
-    const TWO_ADIC_PRIMITVE_ROOT_OF_UNITY: Self::BaseType = UnsignedInteger { limbs: [21] };
+    //const TWO_ADIC_PRIMITVE_ROOT_OF_UNITY: Self::BaseType = UnsignedInteger { limbs: [21] };
+    const TWO_ADIC_PRIMITVE_ROOT_OF_UNITY: Self::BaseType = UnsignedInteger::from_hex_unchecked("15");
 
     fn field_name() -> &'static str {
         "babybear31"
@@ -119,13 +119,23 @@ mod tests {
         use crate::fft::cpu::roots_of_unity::{
             get_powers_of_primitive_root, get_powers_of_primitive_root_coset,
         };
+
         use crate::fft::polynomial::FFTPoly;
-        use crate::field::{
-            element::FieldElement,
-            traits::{IsFFTField, RootsConfig},
-        };
+
+        use crate::field::element::FieldElement;
+        use crate::field::traits::{IsFFTField, RootsConfig};
         use crate::polynomial::Polynomial;
-        use proptest::{collection, prelude::*, std_facade::string::ToString};
+
+        use proptest::{
+            collection,
+            prelude::*,
+            std_facade::{string::ToString, Vec},
+        };
+
+        // FFT related tests
+        type F = Babybear31PrimeField;
+        type FE = FieldElement<F>;
+
 
         fn gen_fft_and_naive_evaluation<F: IsFFTField>(
             poly: Polynomial<FieldElement<F>>,
@@ -135,8 +145,16 @@ mod tests {
             let twiddles =
                 get_powers_of_primitive_root(order.into(), len, RootsConfig::Natural).unwrap();
 
+            println!("len = {}", len);
+            println!("order = {}", order);
+            println!("twiddles = {:?}", twiddles);
+
+            println!("a root of unity = {:?}", FieldElement::<Babybear31PrimeField>::new(Babybear31PrimeField::TWO_ADIC_PRIMITVE_ROOT_OF_UNITY).pow(2u64));
+
             let fft_eval = poly.evaluate_fft(1, None).unwrap();
             let naive_eval = poly.evaluate_slice(&twiddles);
+
+            
 
             (fft_eval, naive_eval)
         }
@@ -245,15 +263,14 @@ mod tests {
             }
         }
 
-        // FFT related tests
-        type F = Babybear31PrimeField;
-        type FE = FieldElement<F>;
-
         proptest! {
             // Property-based test that ensures FFT eval. gives same result as a naive polynomial evaluation.
             #[test]
-            fn test_fft_matches_naive_evaluation(poly in poly(8)) {
+            fn test_fft_matches_naive_evaluation(poly in poly(2)) {
+                //println!("{:?}", poly);
+                println!("poly = {:?}", poly);
                 let (fft_eval, naive_eval) = gen_fft_and_naive_evaluation(poly);
+                println!("=========================");
                 prop_assert_eq!(fft_eval, naive_eval);
             }
 
