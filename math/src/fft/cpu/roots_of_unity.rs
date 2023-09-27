@@ -22,6 +22,9 @@ pub fn get_powers_of_primitive_root<F: IsFFTField>(
         RootsConfig::Natural | RootsConfig::BitReverse => F::get_primitive_root_of_unity(n)?,
         _ => F::get_primitive_root_of_unity(n)?.inv().unwrap(),
     };
+    println!("el tipo es {}", std::any::type_name::<F>());
+    println!("un root of unity is {:?}", root);
+    println!(" la raiz del campo es {:?}", F::TWO_ADIC_PRIMITVE_ROOT_OF_UNITY);
     let up_to = match config {
         RootsConfig::Natural | RootsConfig::NaturalInversed => count,
         // In bit reverse form we could need as many as `(1 << count.bits()) - 1` roots

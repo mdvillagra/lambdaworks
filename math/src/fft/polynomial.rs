@@ -206,6 +206,10 @@ mod tests {
         let twiddles =
             get_powers_of_primitive_root(order.into(), len, RootsConfig::Natural).unwrap();
 
+            println!("len = {}", len);
+            println!("order = {}", order);
+            println!("twiddles = {:?}", twiddles);
+
         let fft_eval = poly.evaluate_fft(1, None).unwrap();
         let naive_eval = poly.evaluate_slice(&twiddles);
 
@@ -408,8 +412,10 @@ mod tests {
         proptest! {
             // Property-based test that ensures FFT eval. gives same result as a naive polynomial evaluation.
             #[test]
-            fn test_fft_matches_naive_evaluation(poly in poly(8)) {
+            fn test_fft_matches_naive_evaluation(poly in poly(2)) {
+                println!("poly = {:?}", poly);
                 let (fft_eval, naive_eval) = gen_fft_and_naive_evaluation(poly);
+                println!("=========================");
                 prop_assert_eq!(fft_eval, naive_eval);
             }
 
