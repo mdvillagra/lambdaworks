@@ -23,7 +23,7 @@ pub type Babybear31PrimeField =
 // 21^(2^24)=1 mod 2013265921
 // 2^27(2^4-1)+1 where n=27 (two-adicity) and k=2^4+1
 impl IsFFTField for Babybear31PrimeField {
-    const TWO_ADICITY: u64 = 27;
+    const TWO_ADICITY: u64 = 24;
 
     const TWO_ADIC_PRIMITVE_ROOT_OF_UNITY: Self::BaseType = UnsignedInteger { limbs: [21] };
 
