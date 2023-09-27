@@ -115,6 +115,27 @@ mod tests {
         }
     }
 
+    mod test_babybear_31_root_of_unity {
+        use super::super::Babybear31PrimeField;
+        use crate::field::{element::FieldElement, traits::IsFFTField};
+        use proptest::std_facade::string::ToString;
+        #[test]
+        fn test_two_adic_primitive_root_of_unity() {
+            let root = FieldElement::<Babybear31PrimeField>::from_hex_unchecked(
+                &Babybear31PrimeField::TWO_ADIC_PRIMITVE_ROOT_OF_UNITY.to_string(),
+            );
+            let result = root.pow(u64::pow(2, 24));
+
+            //checks that Babybear31PrimeField::TWO_ADIC_PRIMITVE_ROOT_OF_UNITY is a root of unity
+            assert_eq!(result, FieldElement::<Babybear31PrimeField>::one());
+
+            //checks that Babybear31PrimeField::TWO_ADIC_PRIMITVE_ROOT_OF_UNITY is primitive
+            for i in 2..u64::pow(2, 24) {
+                assert_ne!(root.pow(i), FieldElement::<Babybear31PrimeField>::one());
+            }
+        }
+    }
+
     mod test_babybear_31_fft {
         use super::super::Babybear31PrimeField;
         use crate::fft::cpu::roots_of_unity::{
@@ -126,16 +147,7 @@ mod tests {
         use crate::field::element::FieldElement;
         use crate::field::traits::{IsFFTField, RootsConfig};
         use crate::polynomial::Polynomial;
-
-        use proptest::{
-            collection,
-            prelude::*,
-            std_facade::{string::ToString, Vec},
-        };
-
-        // FFT related tests
-        type F = Babybear31PrimeField;
-        type FE = FieldElement<F>;
+        use proptest::{collection, prelude::*};
 
         fn gen_fft_and_naive_evaluation<F: IsFFTField>(
             poly: Polynomial<FieldElement<F>>,
@@ -209,60 +221,6 @@ mod tests {
 
             (poly, new_poly)
         }
-
-        #[test]
-        fn test_two_adic_primitive_root_of_unity() {
-            let root = FieldElement::<Babybear31PrimeField>::from_hex_unchecked(
-                &Babybear31PrimeField::TWO_ADIC_PRIMITVE_ROOT_OF_UNITY.to_string(),
-            );
-            let result = root.pow(u64::pow(2, 24));
-
-            //checks that Babybear31PrimeField::TWO_ADIC_PRIMITVE_ROOT_OF_UNITY is a root of unity
-            assert_eq!(result, FieldElement::<Babybear31PrimeField>::one());
-
-            //checks that Babybear31PrimeField::TWO_ADIC_PRIMITVE_ROOT_OF_UNITY is primitive
-            for i in 2..u64::pow(2, 24) {
-                assert_ne!(root.pow(i), FieldElement::<Babybear31PrimeField>::one());
-            }
-        }
-
-        #[test]
-        fn test_fft_matches_naive_evaluation_version2() {
-            let coeff = vec![FE::from_hex_unchecked("5"), FE::from_hex_unchecked("7")];
-            let poly: Polynomial<FieldElement<_>> = Polynomial::new(&coeff);
-            //println!("{:?}", poly);
-            println!(
-                "root is {:?}",
-            
-                    Babybear31PrimeField::TWO_ADIC_PRIMITVE_ROOT_OF_UNITY
-                
-            );
-            println!(
-                "root is {:?}",
-                FE::from_hex_unchecked(
-                    &Babybear31PrimeField::TWO_ADIC_PRIMITVE_ROOT_OF_UNITY.to_string()
-                )
-            );
-            println!("poly = {:?}", poly.coefficients());
-
-            println!("=========================");
-
-            let len = poly.coeff_len().next_power_of_two();
-            let order = len.trailing_zeros();
-            let twiddles =
-                get_powers_of_primitive_root::<Babybear31PrimeField>(order.into(), len, RootsConfig::Natural).unwrap();
-
-            println!("poly verificado {:?}", poly);
-            println!("len = {}", len);
-            println!("order = {}", order);
-            println!("twiddles = {:?}", twiddles);
-
-            let fft_eval = poly.evaluate_fft(1, None).unwrap();
-            let naive_eval = poly.evaluate_slice(&twiddles);
-
-            assert_eq!(fft_eval, naive_eval);
-        }
-
         prop_compose! {
             fn powers_of_two(max_exp: u8)(exp in 1..max_exp) -> usize { 1 << exp }
             // max_exp cannot be multiple of the bits that represent a usize, generally 64 or 32.
